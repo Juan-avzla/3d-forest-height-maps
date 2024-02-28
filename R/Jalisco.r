@@ -99,20 +99,15 @@ forest_height_list <- lapply(
     terra::rast
 )
 
-print("Crop files")
 # Crop files
 forest_height_rasters <- lapply(
     forest_height_list,
     function(x) {
         terra::crop(
             x,
-            # Crop area
-            terra::vect(
-                Jalisco_sf
-            ),
-            # Tell terra library keep the elements inside 
-            snap = "in"
-            # mask = T
+            terra::vect(Jalisco_sf),
+            snap = "in",
+            mask = TRUE
         )
     }
 )
@@ -141,18 +136,18 @@ head(forest_height_Jalisco_df)
 names(forest_height_Jalisco_df)[3] <- "height"
 
 # ----------------------------------
-# 5. BREAKS
-fixed_breaks_df <- c(0, 10, 20, 30, 40, 50, 60)
+# 6. BREAKS
+fixed_breaks_df <- c(0, 15, 30, 45, 60)
 
 breaks <- classInt::classIntervals(
     forest_height_Jalisco_df$height,
-    n = 6,
+    n = 5,
     style = "fixed",
     fixedBreaks = fixed_breaks_df
 )$brks
 
 # ----------------------------------
-# 5. Color pallete
+# 7. Color pallete
 colors <- c(
     "white", "#ffd3af", "#fbe06e", 
     "#6daa55", "#205544"
@@ -162,4 +157,80 @@ texture <- colorRampPalette(
     colors,
     bias = 2
 
-)(7) # Number of colors to createe
+)(6) # Number of colors to create
+
+# ----------------------------------
+# 8. PLOT WITH GGPLOT2
+
+# Define the main layer
+P <- ggplot(
+    forest_height_Jalisco_df
+) + 
+geom_raster(
+    aes(
+        x = x,
+        y = y,
+        fill = height
+    )
+) + 
+# Define scale bar
+scale_fill_gradientn(
+    name = "Height (m)",
+    colors = texture,
+    breaks = round(breaks, 0)
+) + 
+# Define coordinates
+coord_sf(crs = 4326) + 
+#Customize legend
+guides(
+    fill = guide_legend(
+        direction = "vertical",
+        keyheight = unit(5, "mm"),
+        keywidth = unit(5, "mm"),
+        title.position = "top",
+        label.position = "right",
+        title.hjust = 0.5, 
+        label.hjust = 0.5,
+        ncol = 1,
+        byrow = F
+    )
+) + 
+# Define the background
+theme_minimal() +
+theme(
+    axis.line = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    legend.position = "right",
+    legend.title = element_text(
+        size = 11, colour = "grey10"
+    ),
+    legend.text = element_text(
+        size = 10, colour  = "grey10"
+    ),
+    panel.grid.major = element_line(
+        colour = "white"
+    ),
+    panel.grid.minor = element_line(
+        colour = "white"
+    ),
+    plot.background = element_rect(
+        fill = "white", colour = NA
+    ),
+    legend.background = element_rect(
+        fill = "white", colour = NA
+    ),
+    panel.border = element_rect(
+        fill = NA, colour = "white"
+    ),
+    plot.margin = unit (
+        c(
+            t = 0, b = 0,
+            l = 0, r = 0
+        ), "lines"
+    )
+)
+
+
